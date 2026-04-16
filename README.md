@@ -71,4 +71,4 @@ Click the **"Download Syllabus PDF"** button in the top bar. It opens a printabl
 
 ---
 
-*Built for Aditya Rawat · 2026 · MySQL as Practice DB · 100% Free Resources*
+*Built for Aditya Rawat · 2026 · MySQL as Practice DB · 100% Free Resources**
