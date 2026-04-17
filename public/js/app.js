@@ -84,7 +84,7 @@ async function resetProgress() {
     prog = {};
     timestamps = {};
     renderAll();
-    showSaved("✓ Progress reset");
+    showSaved("✓ Reset");
   } catch { alert("Error resetting progress. Try again."); }
 }
 
@@ -123,7 +123,7 @@ async function flushSaves() {
       method: "POST",
       body: { updates, timestamps: tsBatch },
     });
-    showSaved("✓ Progress saved to MySQL");
+    showSaved("✓ Saved");
   } catch {
     // silently fail — data is still in local state
   }

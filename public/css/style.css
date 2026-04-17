@@ -211,8 +211,8 @@ a{text-decoration:none;color:inherit}
 .check-combo-title{font-size:13px;font-weight:700;color:var(--amber);margin-bottom:10px}
 
 /* ── Save indicator ── */
-.save-indicator{position:fixed;bottom:18px;right:18px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#4ade80;padding:7px 14px;border-radius:8px;font-size:11px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
-.save-indicator.visible{opacity:1}
+.save-indicator{position:fixed;bottom:20px;right:20px;background:rgba(34,197,94,.13);border:1px solid rgba(34,197,94,.3);color:#4ade80;padding:6px 13px;border-radius:8px;font-size:11px;font-weight:600;letter-spacing:.3px;opacity:0;transition:opacity .25s ease,transform .25s ease;pointer-events:none;z-index:999;transform:translateY(6px)}
+.save-indicator.visible{opacity:1;transform:translateY(0)}
 
 /* ── Footer ── */
 .footer{border-top:1px solid var(--border);padding:14px 20px;margin-top:22px;display:flex;align-items:center;justify-content:space-between;gap:14px;background:rgba(0,0,0,.3);flex-wrap:wrap}
