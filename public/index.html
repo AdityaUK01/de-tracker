@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>DE Tracker — Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#030712;--bg2:#060e1c;--bg3:#0a1628;
+      --blue:#1648d6;--cyan:#00d4ff;
+      --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.16);
+      --text:#e2e8f0;--text2:#94a3b8;--text3:#4b5563;
+      --err:#ef4444;--ok:#22c55e;
+      --font:'Space Grotesk',sans-serif;
+      --mono:'JetBrains Mono',monospace;
+    }
+    body{font-family:var(--font);background:var(--bg);color:var(--text);
+      min-height:100vh;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;padding:24px;}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;
+      background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(22,72,214,0.14),transparent);}
+
+    /* brand */
+    .brand{display:flex;align-items:center;gap:11px;margin-bottom:28px;}
+    .b-icon{width:42px;height:42px;border-radius:11px;
+      background:linear-gradient(135deg,#1648d6,#00d4ff);
+      display:flex;align-items:center;justify-content:center;font-size:21px;}
+    .b-title{font-size:18px;font-weight:800;color:#f8fafc;letter-spacing:.5px;display:block;}
+    .b-sub{font-size:10px;color:var(--text3);display:block;}
+
+    /* card */
+    .card{width:100%;max-width:430px;background:rgba(255,255,255,0.025);
+      border:1px solid var(--border);border-radius:18px;padding:30px 28px;
+      position:relative;}
+    .card::before{content:'';position:absolute;inset:-1px;border-radius:19px;
+      background:linear-gradient(135deg,rgba(22,72,214,0.25),transparent 55%);z-index:-1;}
+
+    /* tabs */
+    .tabs{display:flex;background:var(--bg3);border-radius:10px;padding:3px;margin-bottom:26px;gap:3px;}
+    .tab{flex:1;padding:9px;border:none;border-radius:8px;background:transparent;
+      color:var(--text3);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;}
+    .tab.active{background:var(--blue);color:#fff;}
+
+    /* form */
+    .fg{margin-bottom:15px;}
+    label{display:block;font-size:10.5px;font-weight:700;color:var(--text2);
+      letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px;}
+    input{width:100%;padding:11px 13px;background:var(--bg3);border:1px solid var(--border);
+      border-radius:9px;color:var(--text);font-family:var(--font);font-size:14px;
+      outline:none;transition:border-color .18s;}
+    input:focus{border-color:var(--blue);}
+    input::placeholder{color:var(--text3);}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+
+    /* strength */
+    .sbar{height:3px;border-radius:99px;background:var(--bg3);margin-top:5px;overflow:hidden;}
+    .sfill{height:100%;border-radius:99px;transition:all .3s;width:0;}
+    .stxt{font-size:10px;margin-top:3px;}
+
+    /* button */
+    .btn{width:100%;padding:13px;margin-top:6px;
+      background:linear-gradient(135deg,#1648d6,#0ea5e9);border:none;
+      border-radius:10px;color:#fff;font-family:var(--font);font-size:14px;
+      font-weight:700;cursor:pointer;letter-spacing:.3px;transition:opacity .18s;}
+    .btn:hover{opacity:.87;}
+    .btn:disabled{opacity:.45;cursor:not-allowed;}
+
+    /* alert */
+    .alert{padding:10px 13px;border-radius:8px;font-size:12px;
+      margin-bottom:13px;align-items:center;gap:8px;display:none;}
+    .alert.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;display:flex;}
+    .alert.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#4ade80;display:flex;}
+
+    /* spinner */
+    .spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);
+      border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;display:inline-block;}
+    @keyframes sp{to{transform:rotate(360deg)}}
+
+    /* socials */
+    .socials{margin-top:22px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;}
+    .slink{display:flex;align-items:center;gap:5px;font-size:11px;
+      color:var(--text3);transition:color .15s;text-decoration:none;}
+    .slink:hover{color:var(--text);}
+    .slink.li:hover{color:#0a66c2;}
+    .slink.gh:hover{color:#e2e8f0;}
+    .slink.gm:hover{color:#ea4335;}
+
+    .note{text-align:center;font-size:10px;color:var(--text3);margin-top:14px;line-height:1.5;}
+  </style>
+</head>
+<body>
+<div class="brand">
+  <div class="b-icon">⬡</div>
+  <div><span class="b-title">DE TRACKER</span><span class="b-sub">Basic → Top 5% AWS Data Engineer</span></div>
+</div>
+
+<div class="card">
+  <div class="tabs">
+    <button class="tab active" id="tLogin"    onclick="sw('login')">Sign In</button>
+    <button class="tab"        id="tRegister" onclick="sw('register')">Create Account</button>
+  </div>
+  <div class="alert" id="alertBox"></div>
+
+  <!-- LOGIN -->
+  <form id="fLogin" onsubmit="doLogin(event)">
+    <div class="fg">
+      <label>Username or Email</label>
+      <input id="lLogin" type="text" placeholder="aditya or aditya@gmail.com" autocomplete="username" required/>
+    </div>
+    <div class="fg">
+      <label>Password</label>
+      <input id="lPass" type="password" placeholder="Your password" autocomplete="current-password" required/>
+    </div>
+    <button class="btn" id="btnLogin">Sign In to Your Tracker</button>
+  </form>
+
+  <!-- REGISTER -->
+  <form id="fReg" style="display:none" onsubmit="doRegister(event)">
+    <div class="fg">
+      <label>Full Name</label>
+      <input id="rName" type="text" placeholder="Aditya Rawat" autocomplete="name" required/>
+    </div>
+    <div class="row2">
+      <div class="fg">
+        <label>Username</label>
+        <input id="rUser" type="text" placeholder="aditya" autocomplete="username" required/>
+      </div>
+      <div class="fg">
+        <label>Email</label>
+        <input id="rEmail" type="email" placeholder="you@gmail.com" autocomplete="email" required/>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Password</label>
+      <input id="rPass" type="password" placeholder="Min 6 characters" autocomplete="new-password" oninput="strength(this.value)" required/>
+      <div class="sbar"><div class="sfill" id="sf"></div></div>
+      <div class="stxt" id="st"></div>
+    </div>
+    <button class="btn" id="btnReg">Create Account &amp; Start Tracking</button>
+  </form>
+
+  <div class="note">🔒 Your progress is saved to your account only.<br/>Passwords are hashed with bcrypt — never stored in plain text.</div>
+</div>
+
+<div class="socials">
+  <a href="https://www.linkedin.com/in/aditya-rawat-b6635521a/" target="_blank" class="slink li">
+    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    LinkedIn
+  </a>
+  <a href="https://github.com/AdityaUK01" target="_blank" class="slink gh">
+    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+    GitHub
+  </a>
+  <a href="mailto:adityarawat9917@gmail.com" class="slink gm">
+    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>
+    adityarawat9917@gmail.com
+  </a>
+</div>
+
+<script>
+const API="";
+function sw(t){
+  document.getElementById("fLogin").style.display   =t==="login"?"block":"none";
+  document.getElementById("fReg").style.display     =t==="register"?"block":"none";
+  document.getElementById("tLogin").classList.toggle("active",t==="login");
+  document.getElementById("tRegister").classList.toggle("active",t==="register");
+  clearAlert();
+}
+function alert2(msg,type="err"){
+  const b=document.getElementById("alertBox");
+  b.textContent=msg; b.className="alert "+type;
+}
+function clearAlert(){document.getElementById("alertBox").className="alert";}
+function setLoading(id,on){
+  const b=document.getElementById(id);b.disabled=on;
+  b.innerHTML=on?'<span class="spin"></span>':(id==="btnLogin"?"Sign In to Your Tracker":"Create Account & Start Tracking");
+}
+function strength(pw){
+  let s=0;if(pw.length>=6)s++;if(pw.length>=10)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;
+  const cols=["","#ef4444","#f97316","#eab308","#22c55e","#00d4ff"];
+  const lbls=["","Weak","Fair","Good","Strong","Very Strong"];
+  document.getElementById("sf").style.cssText=`width:${s*20}%;background:${cols[s]}`;
+  const t=document.getElementById("st");t.textContent=lbls[s];t.style.color=cols[s];
+}
+async function doLogin(e){
+  e.preventDefault();clearAlert();setLoading("btnLogin",true);
+  try{
+    const r=await fetch(`${API}/api/auth/login`,{method:"POST",credentials:"include",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({login:document.getElementById("lLogin").value.trim(),
+        password:document.getElementById("lPass").value})});
+    const d=await r.json();
+    if(!r.ok){alert2(d.error||"Login failed");return;}
+    localStorage.setItem("de_token",d.token);
+    localStorage.setItem("de_user",JSON.stringify(d.user));
+    alert2("Welcome back, "+d.user.full_name+"! Redirecting...","ok");
+    setTimeout(()=>window.location.href="/app.html",700);
+  }catch{alert2("Cannot connect to server — is it running?");}
+  finally{setLoading("btnLogin",false);}
+}
+async function doRegister(e){
+  e.preventDefault();clearAlert();setLoading("btnReg",true);
+  try{
+    const r=await fetch(`${API}/api/auth/register`,{method:"POST",credentials:"include",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({full_name:document.getElementById("rName").value.trim(),
+        username:document.getElementById("rUser").value.trim(),
+        email:document.getElementById("rEmail").value.trim(),
+        password:document.getElementById("rPass").value})});
+    const d=await r.json();
+    if(!r.ok){alert2(d.error||"Registration failed");return;}
+    localStorage.setItem("de_token",d.token);
+    localStorage.setItem("de_user",JSON.stringify(d.user));
+    alert2("Account created! Redirecting...","ok");
+    setTimeout(()=>window.location.href="/app.html",700);
+  }catch{alert2("Cannot connect to server — is it running?");}
+  finally{setLoading("btnReg",false);}
+}
+// Auto-redirect if already logged in
+(async()=>{
+  const tk=localStorage.getItem("de_token");if(!tk)return;
+  try{const r=await fetch(`${API}/api/auth/me`,{headers:{"Authorization":"Bearer "+tk},credentials:"include"});
+    if(r.ok)window.location.href="/app.html";}catch{}
+})();
+</script>
+</body>
+</html>
