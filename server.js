@@ -57,6 +57,9 @@ async function initDatabase() {
 
   console.log("✅  MySQL connected →", `${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
 
+  // Set session SQL mode to allow TIMESTAMP defaults (fixes freesqldatabase.com)
+  await conn.execute("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION'");
+
   await conn.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id          INT UNSIGNED    NOT NULL AUTO_INCREMENT,
@@ -66,13 +69,13 @@ async function initDatabase() {
       full_name   VARCHAR(120)    NOT NULL DEFAULT '',
       role        ENUM('user','admin') NOT NULL DEFAULT 'user',
       is_active   TINYINT(1)      NOT NULL DEFAULT 1,
-      created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      last_login  DATETIME                 DEFAULT NULL,
+      created_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      last_login  TIMESTAMP                DEFAULT NULL,
       PRIMARY KEY (id),
       UNIQUE KEY uk_username (username),
       UNIQUE KEY uk_email    (email)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   console.log("✅  Table: users");
 
@@ -80,15 +83,15 @@ async function initDatabase() {
     CREATE TABLE IF NOT EXISTS progress (
       id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
       user_id       INT UNSIGNED NOT NULL,
-      \`key\`       VARCHAR(220) NOT NULL,
+      \\`key\\`    VARCHAR(220) NOT NULL,
       value         TINYINT(1)   NOT NULL DEFAULT 1,
-      completed_at  DATETIME              DEFAULT NULL,
-      updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      completed_at  TIMESTAMP             DEFAULT NULL,
+      updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (id),
-      UNIQUE KEY uk_user_key (user_id, \`key\`),
+      UNIQUE KEY uk_user_key (user_id, \\`key\\`),
       FOREIGN KEY fk_prog_user (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
       INDEX idx_user (user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   console.log("✅  Table: progress");
 
@@ -99,13 +102,13 @@ async function initDatabase() {
       token_hash  CHAR(64)     NOT NULL,
       ip_address  VARCHAR(45)           DEFAULT NULL,
       user_agent  VARCHAR(512)          DEFAULT NULL,
-      created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      expires_at  DATETIME     NOT NULL,
+      created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      expires_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (id),
       FOREIGN KEY fk_sess_user (user_id) REFERENCES users(id) ON DELETE CASCADE,
       INDEX idx_token   (token_hash),
       INDEX idx_expires (expires_at)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   console.log("✅  Table: sessions");
 
