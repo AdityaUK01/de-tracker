@@ -1,8 +1,3 @@
-# DE Tracker v2 — Full Stack with MySQL Login
-## Aditya Rawat | Basic → Top 5% AWS Data Engineer | 2026
-
----
-
 ## 📁 Project Structure
 
 ```
@@ -242,4 +237,4 @@ This opens your full 22-week curriculum PDF from Google Drive in a new tab.
 
 ---
 
-*DE Tracker v2 · 2026 · Built for Aditya Rawat · MySQL + Node.js + JWT*
+**DE Tracker v2 · 2026 · Built for Aditya Rawat · MySQL + Node.js + JWT**
