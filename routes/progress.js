@@ -1,4 +1,4 @@
-// routes/progress.js — with datetime timestamp per completion
+// routes/progress.js
 const express = require("express");
 const pool    = require("../config/db");
 const { authRequired } = require("../middleware/auth");
@@ -6,17 +6,17 @@ const { authRequired } = require("../middleware/auth");
 const router = express.Router();
 router.use(authRequired);
 
-// GET /api/progress
+// GET /api/progress — load all progress + timestamps
 router.get("/", async (req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT `key`, value, completed_at FROM progress WHERE user_id = ?",
+      "SELECT pkey, value, completed_at FROM progress WHERE user_id = ?",
       [req.user.id]
     );
     const progress = {}, timestamps = {};
     rows.forEach(r => {
-      progress[r.key] = !!r.value;
-      if (r.value && r.completed_at) timestamps[r.key] = r.completed_at;
+      progress[r.pkey] = !!r.value;
+      if (r.value && r.completed_at) timestamps[r.pkey] = r.completed_at;
     });
     return res.json({ progress, timestamps });
   } catch (err) {
@@ -25,20 +25,23 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST /api/progress — batch upsert with timestamps
+// POST /api/progress — batch upsert { updates: {key:bool}, timestamps: {key:datetime} }
 router.post("/", async (req, res) => {
   const updates    = req.body?.updates;
   const timestamps = req.body?.timestamps;
   if (!updates || typeof updates !== "object")
     return res.status(400).json({ error: "updates object required" });
+
   const entries = Object.entries(updates).filter(([k]) => typeof k === "string" && k.length <= 220);
   if (!entries.length) return res.json({ saved: 0 });
+
   try {
     for (const [key, value] of entries) {
       const v  = value ? 1 : 0;
       const ts = (value && timestamps && timestamps[key]) ? timestamps[key] : null;
       await pool.query(
-        "INSERT INTO progress (user_id, `key`, value, completed_at) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE value=VALUES(value), completed_at=VALUES(completed_at), updated_at=NOW()",
+        "INSERT INTO progress (user_id, pkey, value, completed_at) VALUES (?, ?, ?, ?) " +
+        "ON DUPLICATE KEY UPDATE value=VALUES(value), completed_at=VALUES(completed_at), updated_at=NOW()",
         [req.user.id, key, v, ts]
       );
     }
@@ -49,16 +52,20 @@ router.post("/", async (req, res) => {
   }
 });
 
-// PUT /api/progress/:key — toggle
+// PUT /api/progress/:key — toggle single item
 router.put("/:key", async (req, res) => {
   const key = req.params.key;
   if (!key || key.length > 220) return res.status(400).json({ error: "Invalid key" });
   try {
-    const [rows] = await pool.query("SELECT value FROM progress WHERE user_id=? AND `key`=?", [req.user.id, key]);
+    const [rows] = await pool.query(
+      "SELECT value FROM progress WHERE user_id = ? AND pkey = ?",
+      [req.user.id, key]
+    );
     const newVal = rows.length ? (rows[0].value ? 0 : 1) : 1;
-    const ts     = newVal ? new Date().toISOString().replace("T"," ").slice(0,19) : null;
+    const ts     = newVal ? new Date().toISOString().replace("T", " ").slice(0, 19) : null;
     await pool.query(
-      "INSERT INTO progress (user_id,`key`,value,completed_at) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE value=VALUES(value),completed_at=VALUES(completed_at),updated_at=NOW()",
+      "INSERT INTO progress (user_id, pkey, value, completed_at) VALUES (?, ?, ?, ?) " +
+      "ON DUPLICATE KEY UPDATE value=VALUES(value), completed_at=VALUES(completed_at), updated_at=NOW()",
       [req.user.id, key, newVal, ts]
     );
     return res.json({ key, value: !!newVal, completed_at: ts });
@@ -71,7 +78,9 @@ router.put("/:key", async (req, res) => {
 // DELETE /api/progress/reset
 router.delete("/reset", async (req, res) => {
   try {
-    const [result] = await pool.query("DELETE FROM progress WHERE user_id=?", [req.user.id]);
+    const [result] = await pool.query(
+      "DELETE FROM progress WHERE user_id = ?", [req.user.id]
+    );
     return res.json({ message: "Progress reset", deleted: result.affectedRows });
   } catch (err) {
     return res.status(500).json({ error: "Server error" });
@@ -82,7 +91,14 @@ router.delete("/reset", async (req, res) => {
 router.get("/stats", async (req, res) => {
   try {
     const [[stats]] = await pool.query(
-      "SELECT COUNT(*) AS total_done, SUM(`key` REGEXP '_d[0-9]+$') AS tasks_done, SUM(`key` LIKE 'taster_%') AS tasters_done, SUM(`key` LIKE 'combo_%') AS combos_done, SUM(`key` LIKE 'cl_%') AS checklist_done, MIN(completed_at) AS first_task, MAX(completed_at) AS last_task FROM progress WHERE user_id=? AND value=1",
+      "SELECT COUNT(*) AS total_done, " +
+      "SUM(pkey REGEXP '_d[0-9]+$') AS tasks_done, " +
+      "SUM(pkey LIKE 'taster_%') AS tasters_done, " +
+      "SUM(pkey LIKE 'combo_%') AS combos_done, " +
+      "SUM(pkey LIKE 'cl_%') AS checklist_done, " +
+      "MIN(completed_at) AS first_task, " +
+      "MAX(completed_at) AS last_task " +
+      "FROM progress WHERE user_id = ? AND value = 1",
       [req.user.id]
     );
     return res.json({ stats });
