@@ -74,7 +74,7 @@ async function initDatabase() {
     "  is_active  TINYINT(1)   NOT NULL DEFAULT 1," +
     "  created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP," +
     "  updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP," +
-    "  last_login TIMESTAMP             DEFAULT NULL," +
+    "  last_login TIMESTAMP NULL," +
     "  PRIMARY KEY (id)," +
     "  UNIQUE KEY uk_username (username)," +
     "  UNIQUE KEY uk_email (email)" +
