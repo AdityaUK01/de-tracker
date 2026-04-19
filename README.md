@@ -1,240 +1,224 @@
+# DE Tracker — AWS Data Engineer Progress Tracker
+### 🌐 Live at: [https://de-tracker-7fnr.onrender.com](https://de-tracker-7fnr.onrender.com)
+
+> **Built by Aditya Rawat** — Aspiring AWS Data Engineer | BCA Graduate | Delhi
+
+---
+
+## 🚀 What is this?
+
+A full-stack web application to track your journey from **Basic → Top 5% AWS Data Engineer**.
+
+- ✅ **23 skills** across 5 phases
+- 📅 **22-week structured plan**
+- 💾 **Progress saved to MySQL** — never lose your data
+- ⏰ **Datetime stamp** on every completed task (IST)
+- 🔐 **Login system** — your progress is yours alone
+- 📥 **Download full syllabus PDF** from Google Drive
+
+---
+
+## 🌐 Live Website
+
+```
+https://de-tracker-7fnr.onrender.com
+```
+
+> ⚠️ Free Render instance — may take **30–50 seconds** to wake up on first visit.
+> Just wait and refresh once. After that it's fast.
+
+---
+
+## 📋 Features
+
+| Feature | Description |
+|---------|-------------|
+| 🔐 Login / Register | Secure accounts with bcrypt password hashing + JWT |
+| 📊 Dashboard | Progress ring, stat cards, phase overview, next tasks |
+| 📅 Schedule | Full 22-week study plan table |
+| ✅ Daily Tasks | 100+ tasks — tick to complete, datetime recorded |
+| ⬡ Combo Projects | 5 multi-skill projects that unlock on prerequisites |
+| ✓ Checklist | Job-readiness checklist with completion timestamps |
+| 📥 Syllabus PDF | Opens full curriculum from Google Drive |
+| 💾 MySQL Backend | All progress stored in MySQL, survives page refresh |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Vanilla HTML + CSS + JavaScript |
+| Backend | Node.js + Express.js |
+| Database | MySQL (freesqldatabase.com) |
+| Auth | JWT (jsonwebtoken) + bcryptjs |
+| Hosting | Render (free tier) |
+| Fonts | Space Grotesk + JetBrains Mono |
+
+---
+
 ## 📁 Project Structure
 
 ```
 de-tracker-full/
-├── server.js                ← Express server (entry point)
-├── package.json             ← All dependencies
-├── .env.example             ← Copy to .env, fill your values
+├── server.js                 ← Express server + auto table creation
+├── package.json
+├── .env.example              ← Copy → .env with your MySQL creds
 │
 ├── config/
-│   └── db.js                ← MySQL connection pool (mysql2)
+│   └── db.js                 ← MySQL connection pool
 │
 ├── middleware/
-│   └── auth.js              ← JWT Bearer token verification
+│   └── auth.js               ← JWT auth middleware
 │
 ├── routes/
-│   ├── auth.js              ← /api/auth/* (register, login, logout, me)
-│   ├── progress.js          ← /api/progress/* (load, save, toggle, reset, stats)
-│   └── admin.js             ← /api/admin/* (admin-only user management)
+│   ├── auth.js               ← /api/auth/* (register, login, logout, me)
+│   ├── progress.js           ← /api/progress/* (save, load, toggle, reset)
+│   └── admin.js              ← /api/admin/* (admin-only)
 │
 ├── db/
-│   ├── schema.sql           ← Full MySQL schema (3 tables)
-│   └── setup.js             ← Auto-create database + tables
+│   ├── schema.sql            ← MySQL schema reference
+│   └── setup.js              ← Manual table setup script
 │
-└── public/                  ← Frontend (served as static)
-    ├── index.html           ← Login / Register page
-    ├── app.html             ← Main tracker app (auth-protected)
-    ├── css/style.css        ← Complete dark premium UI styles
+└── public/                   ← Frontend (static files)
+    ├── index.html            ← Login / Register page
+    ├── app.html              ← Main tracker app
+    ├── css/style.css
     └── js/
-        ├── data.js          ← All curriculum data (23 skills, 22 weeks, combos)
-        └── app.js           ← Frontend logic (auth, progress, datetime tracking)
+        ├── data.js           ← All 23 skills, curriculum data
+        └── app.js            ← Frontend logic
 ```
 
 ---
 
-## 🚀 Quick Start (5 steps)
+## 🗄️ Database Schema
 
-### Step 1 — Install Node.js
-Download from https://nodejs.org (v18+ recommended)
-
-### Step 2 — Install MySQL
-Download from https://dev.mysql.com/downloads/mysql/ or use XAMPP/WAMP
-
-### Step 3 — Install project dependencies
-```bash
-cd de-tracker-full
-npm install
-```
-
-### Step 4 — Configure environment
-```bash
-cp .env.example .env
-```
-Edit `.env` with your MySQL credentials:
-```
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASS=your_mysql_password
-DB_NAME=de_tracker
-JWT_SECRET=any_long_random_string_here
-PORT=3000
-```
-
-### Step 5 — Create database tables
-```bash
-node db/setup.js
-```
-Output should be:
-```
-✅ MySQL connected → localhost:3306/de_tracker
-✅ CREATE DATABASE IF NOT EXISTS de_tracker...
-✅ CREATE TABLE IF NOT EXISTS users...
-✅ CREATE TABLE IF NOT EXISTS progress...
-✅ CREATE TABLE IF NOT EXISTS sessions...
-🎉 Database 'de_tracker' is ready!
-```
-
-### Step 6 — Start the server
-```bash
-node server.js
-# or for dev with auto-reload:
-npm run dev
-```
-
-### Step 7 — Open in browser
-```
-http://localhost:3000
-```
-Register an account → start tracking!
-
----
-
-## 🗄️ MySQL Database Schema
-
-### `users` table
+### `users`
 ```sql
 id, username (unique), email (unique), password (bcrypt),
-full_name, role (user/admin), is_active,
-created_at, updated_at, last_login
+full_name, role, is_active, created_at, last_login
 ```
 
-### `progress` table
+### `progress`
 ```sql
-id, user_id (FK → users.id),
-key        VARCHAR(220)  -- e.g. "math_d0", "taster_git", "combo_c1"
-value      TINYINT(1)    -- 1 = done, 0 = not done
-completed_at DATETIME    -- ← EXACT datetime task was marked complete
-updated_at DATETIME
+id, user_id, pkey (task key), value (0/1),
+completed_at (IST datetime string), created_at
 ```
 
-### `sessions` table
-```sql
-id, user_id, token_hash (SHA-256 of JWT),
-ip_address, user_agent, created_at, expires_at
-```
-
-### Progress key naming convention
-| Type | Key format | Example |
-|------|-----------|---------|
-| Daily task | `{skill_id}_d{day_index}` | `math_d0`, `python_basics_d4` |
-| Skill taster | `taster_{skill_id}` | `taster_git`, `taster_aws_core1` |
-| Combo project | `combo_{combo_id}` | `combo_c1`, `combo_c5` |
-| Checklist item | `cl_{phase_name}_{index}` | `cl_PHASE 0 — ABSOLUTE BASICS_2` |
+### Progress key format
+| Type | Key | Example |
+|------|-----|---------|
+| Daily task | `{skill}_d{index}` | `math_d0`, `python_basics_d4` |
+| Skill taster | `taster_{skill}` | `taster_git` |
+| Combo project | `combo_{id}` | `combo_c1` |
+| Checklist | `cl_{phase}_{index}` | `cl_PHASE 0_2` |
 
 ---
 
 ## 🌐 API Endpoints
 
-### Auth
-| Method | URL | Body | Description |
-|--------|-----|------|-------------|
-| POST | `/api/auth/register` | `{username, email, password, full_name}` | Create account |
-| POST | `/api/auth/login` | `{login, password}` | Login (username or email) |
-| POST | `/api/auth/logout` | — | Clear session cookie |
-| GET  | `/api/auth/me` | — | Get current user (requires auth) |
-| PUT  | `/api/auth/profile` | `{full_name}` | Update profile |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Create account |
+| POST | `/api/auth/login` | Login |
+| POST | `/api/auth/logout` | Logout |
+| GET | `/api/auth/me` | Get current user |
+| GET | `/api/progress` | Load all progress + timestamps |
+| POST | `/api/progress` | Batch save progress |
+| PUT | `/api/progress/:key` | Toggle single task |
+| DELETE | `/api/progress/reset` | Reset all progress |
+| GET | `/api/progress/stats` | Summary stats |
+| GET | `/api/health` | Health check |
 
-### Progress (all require auth)
-| Method | URL | Body | Description |
-|--------|-----|------|-------------|
-| GET  | `/api/progress` | — | Load all progress + timestamps |
-| POST | `/api/progress` | `{updates:{key:bool}, timestamps:{key:datetime}}` | Batch save |
-| PUT  | `/api/progress/:key` | — | Toggle single key |
-| DELETE | `/api/progress/reset` | — | Wipe all progress |
-| GET  | `/api/progress/stats` | — | Summary stats |
+---
 
-### Example progress response
-```json
-{
-  "progress": {
-    "math_d0": true,
-    "math_d1": true,
-    "python_basics_d0": false
-  },
-  "timestamps": {
-    "math_d0": "2026-01-15 09:30:45",
-    "math_d1": "2026-01-16 14:22:10"
-  }
-}
+## 🔧 Run Locally
+
+### 1. Clone
+```bash
+git clone https://github.com/AdityaUK01/de-tracker.git
+cd de-tracker
+```
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Configure environment
+```bash
+cp .env.example .env
+```
+Edit `.env`:
+```
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASS=your_password
+DB_NAME=de_tracker
+JWT_SECRET=any_long_random_string
+PORT=3000
+NODE_ENV=development
+```
+
+### 4. Start MySQL and create tables
+```bash
+node db/setup.js
+```
+
+### 5. Run
+```bash
+node server.js
+# or for auto-reload:
+npm run dev
+```
+
+### 6. Open
+```
+http://localhost:3000
 ```
 
 ---
 
-## ⏰ Datetime Tracking Feature
+## 📥 Syllabus PDF
 
-Every task, taster, combo project, and checklist item records the **exact date and time** it was marked complete.
+Full 22-week curriculum available on Google Drive:
 
-- Stored in `completed_at` column in MySQL (`DATETIME` type)
-- Displayed in the app next to each completed item: `✅ 15 Jan 2026, 09:30 AM`
-- Cleared (set to NULL) if you uncheck an item
-- Visible in all 5 views: Daily Tasks, Projects, Checklist, Combos
+**[📄 Download Syllabus PDF](https://drive.google.com/file/d/1Ou3VZ2PKi2dSTMgbonpXPRzmlwwBzm7H/view?usp=sharing)**
 
 ---
 
-## 📥 Download Syllabus
+## 🔗 Links
 
-The **"Download Syllabus PDF"** button (green, top bar) opens:
-```
-https://drive.google.com/file/d/1Ou3VZ2PKi2dSTMgbonpXPRzmlwwBzm7H/view?usp=sharing
-```
-This opens your full 22-week curriculum PDF from Google Drive in a new tab.
-
----
-
-## 🔐 Security
-
-| Feature | Implementation |
-|---------|---------------|
-| Password hashing | bcrypt (12 rounds) |
-| Authentication | JWT (7-day expiry) |
-| Token storage | httpOnly cookie + localStorage |
-| Auth protection | Express middleware on all `/api/progress/*` routes |
-| Rate limiting | 20 auth attempts per 15 min, 120 API calls per min |
-| Admin routes | Role-based access (first registered user = admin) |
+| | |
+|-|-|
+| 🌐 **Live App** | [de-tracker-7fnr.onrender.com](https://de-tracker-7fnr.onrender.com) |
+| 💼 **LinkedIn** | [linkedin.com/in/aditya-rawat-b6635521a](https://www.linkedin.com/in/aditya-rawat-b6635521a/) |
+| 🐙 **GitHub** | [github.com/AdityaUK01](https://github.com/AdityaUK01) |
+| 📧 **Email** | [adityarawat9917@gmail.com](mailto:adityarawat9917@gmail.com) |
 
 ---
 
-## 🔗 Your Links
+## 📊 22-Week Learning Path
 
-| Platform | URL |
-|----------|-----|
-| LinkedIn | https://www.linkedin.com/in/aditya-rawat-b6635521a/ |
-| GitHub   | https://github.com/AdityaUK01 |
-| Email    | adityarawat9917@gmail.com |
-| Syllabus | https://drive.google.com/file/d/1Ou3VZ2PKi2dSTMgbonpXPRzmlwwBzm7H/view?usp=sharing |
-
----
-
-## 💻 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Runtime | Node.js v18+ |
-| Framework | Express.js |
-| Database | MySQL 8.0 (via mysql2) |
-| Auth | JWT (jsonwebtoken) + bcryptjs |
-| Frontend | Vanilla HTML / CSS / JavaScript |
-| Fonts | Space Grotesk + JetBrains Mono |
+| Phase | Weeks | Skills |
+|-------|-------|--------|
+| 🧱 Phase 0 — Absolute Basics | 1–2 | Math, English, Linux, CS Fundamentals |
+| 🐣 Phase 1 — Beginner Core | 3–6 | Python, SQL/MySQL, Git, Bash |
+| ⚙️ Phase 2 — Intermediate Stack | 7–12 | AWS S3+Glue+Athena, Redshift, Lambda, Data Modeling, Airflow, dbt |
+| 🚀 Phase 3 — Advanced Stack | 13–18 | PySpark+EMR+Delta Lake, Kafka+Kinesis, Snowflake, REST APIs, Terraform+Docker |
+| 🏆 Phase 4 — Expert Level | 19–22 | Data Quality, Lake Formation, System Design, AWS DEA-C01 |
 
 ---
 
-## 🐛 Troubleshooting
+## ⚡ Combo Projects (unlock by completing prerequisites)
 
-**"MySQL connection failed"**
-→ Check MySQL is running: `mysql -u root -p`
-→ Verify DB_PASS in `.env` file
-→ Run `node db/setup.js` to create tables
-
-**"Cannot GET /app.html" after login**
-→ Make sure server is running: `node server.js`
-→ Open http://localhost:3000 (not the file directly)
-
-**Progress not saving**
-→ Check browser console for API errors
-→ Verify JWT_SECRET is set in `.env`
-→ Check MySQL has the `progress` table: `SHOW TABLES;`
+1. **Full Serverless Batch Pipeline** — S3 + Glue + Athena + Redshift + Lambda
+2. **Airflow + dbt + Redshift Production Pipeline** — Full orchestrated DE stack
+3. **PySpark + Delta Lake + Glue Lakehouse** — Distributed modern lakehouse
+4. **Real-Time Lambda Architecture** — Kafka + Kinesis + Airflow (streaming + batch)
+5. **Full Modern Data Stack Capstone** — Everything combined — your portfolio flagship
 
 ---
 
-**DE Tracker v2 · 2026 · Built for Aditya Rawat · MySQL + Node.js + JWT**
+*DE Tracker v2.0 · 2026 · Built for Aditya Rawat · MySQL · Node.js · JWT · Render*
