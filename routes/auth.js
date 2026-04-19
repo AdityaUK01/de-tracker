@@ -1,4 +1,4 @@
-// routes/auth.js
+// routes/auth.js — MySQL 5.5 compatible
 const express  = require("express");
 const bcrypt   = require("bcryptjs");
 const jwt      = require("jsonwebtoken");
@@ -7,14 +7,17 @@ const pool     = require("../config/db");
 const { authRequired } = require("../middleware/auth");
 
 const router = express.Router();
-const COOKIE_MAX_AGE = 7 * 24 * 3600 * 1000; // 7 days ms
-const JWT_EXPIRES    = "7d";
+const COOKIE_MAX = 7 * 24 * 3600 * 1000;
+
+function nowStr() {
+  return new Date().toISOString().replace("T", " ").slice(0, 19);
+}
 
 function makeToken(user) {
   return jwt.sign(
-    { sub: user.id, username: user.username, email: user.email, role: user.role },
+    { sub: user.id, username: user.username, email: user.email, role: user.role || "user" },
     process.env.JWT_SECRET,
-    { expiresIn: JWT_EXPIRES }
+    { expiresIn: "7d" }
   );
 }
 
@@ -22,15 +25,14 @@ function setCookie(res, token) {
   res.cookie("token", token, {
     httpOnly: true,
     sameSite: "Lax",
-    maxAge:   COOKIE_MAX_AGE,
-    secure:   process.env.NODE_ENV === "production",
+    maxAge: COOKIE_MAX,
+    secure: process.env.NODE_ENV === "production",
   });
 }
 
-// ── POST /api/auth/register ───────────────────────────────────
+// POST /api/auth/register
 router.post("/register", async (req, res) => {
   const { username = "", email = "", password = "", full_name = "" } = req.body || {};
-
   if (!username.trim() || username.trim().length < 3)
     return res.status(400).json({ error: "Username must be at least 3 characters" });
   if (!email.trim() || !email.includes("@"))
@@ -58,22 +60,21 @@ router.post("/register", async (req, res) => {
     const user   = { id: userId, username: uname, email: em, full_name: full_name.trim(), role: "user" };
     const token  = makeToken(user);
 
-    // Log session
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const hash = crypto.createHash("sha256").update(token).digest("hex");
     await pool.query(
-      "INSERT INTO sessions (user_id, token_hash, ip_address, user_agent, expires_at) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 7 DAY))",
-      [userId, tokenHash, req.ip, req.headers["user-agent"]?.slice(0, 512) || ""]
+      "INSERT INTO sessions (user_id, token_hash, ip_address, user_agent) VALUES (?, ?, ?, ?)",
+      [userId, hash, req.ip || "", (req.headers["user-agent"] || "").slice(0, 512)]
     );
 
     setCookie(res, token);
-    return res.status(201).json({ message: "Account created successfully", user, token });
+    return res.status(201).json({ message: "Account created", user, token });
   } catch (err) {
     console.error("Register error:", err.message);
-    return res.status(500).json({ error: "Server error, please try again" });
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
-// ── POST /api/auth/login ──────────────────────────────────────
+// POST /api/auth/login
 router.post("/login", async (req, res) => {
   const { login = "", password = "" } = req.body || {};
   if (!login.trim() || !password)
@@ -90,16 +91,18 @@ router.post("/login", async (req, res) => {
     const ok   = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: "Invalid credentials" });
 
-    await pool.query("UPDATE users SET last_login = NOW() WHERE id = ?", [user.id]);
+    // Store last_login as string (VARCHAR column)
+    await pool.query(
+      "UPDATE users SET last_login = ? WHERE id = ?", [nowStr(), user.id]
+    );
 
     const payload = { id: user.id, username: user.username, email: user.email, full_name: user.full_name, role: user.role };
     const token   = makeToken(payload);
 
-    // Log session
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const hash = crypto.createHash("sha256").update(token).digest("hex");
     await pool.query(
-      "INSERT INTO sessions (user_id, token_hash, ip_address, user_agent, expires_at) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 7 DAY))",
-      [user.id, tokenHash, req.ip, req.headers["user-agent"]?.slice(0, 512) || ""]
+      "INSERT INTO sessions (user_id, token_hash, ip_address, user_agent) VALUES (?, ?, ?, ?)",
+      [user.id, hash, req.ip || "", (req.headers["user-agent"] || "").slice(0, 512)]
     );
 
     setCookie(res, token);
@@ -114,13 +117,13 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ── POST /api/auth/logout ─────────────────────────────────────
+// POST /api/auth/logout
 router.post("/logout", authRequired, (req, res) => {
   res.clearCookie("token");
-  return res.json({ message: "Logged out successfully" });
+  return res.json({ message: "Logged out" });
 });
 
-// ── GET /api/auth/me ──────────────────────────────────────────
+// GET /api/auth/me
 router.get("/me", authRequired, async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -134,7 +137,7 @@ router.get("/me", authRequired, async (req, res) => {
   }
 });
 
-// ── PUT /api/auth/profile ─────────────────────────────────────
+// PUT /api/auth/profile
 router.put("/profile", authRequired, async (req, res) => {
   const { full_name = "" } = req.body || {};
   if (!full_name.trim()) return res.status(400).json({ error: "Full name required" });
