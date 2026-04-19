@@ -124,8 +124,9 @@ async function flushSaves() {
       body: { updates, timestamps: tsBatch },
     });
     showSaved("✓ Saved");
-  } catch {
-    // silently fail — data is still in local state
+  } catch (err) {
+    console.error("Save failed:", err);
+    showSaved("⚠️ Save failed — check connection");
   }
 }
 
@@ -163,17 +164,31 @@ function phasePercent(ph) {
 function fmtTs(ts) {
   if (!ts) return null;
   try {
-    const d = new Date(ts);
-    return d.toLocaleString("en-IN", {
-      day: "2-digit", month: "short", year: "numeric",
-      hour: "2-digit", minute: "2-digit", hour12: true,
-    });
+    // ts is already an IST string e.g. "2026-04-19 14:30:00"
+    // Parse it as local but display it as IST
+    const parts = ts.replace("T", " ").slice(0, 19).split(/[- :]/);
+    const d = new Date(
+      parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]),
+      parseInt(parts[3] || 0), parseInt(parts[4] || 0), parseInt(parts[5] || 0)
+    );
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const dd  = String(d.getDate()).padStart(2, "0");
+    const mon = months[d.getMonth()];
+    const yr  = d.getFullYear();
+    let   hr  = d.getHours();
+    const min = String(d.getMinutes()).padStart(2, "0");
+    const ampm = hr >= 12 ? "PM" : "AM";
+    hr = hr % 12 || 12;
+    return `${dd} ${mon} ${yr}, ${hr}:${min} ${ampm} IST`;
   } catch { return null; }
 }
 
 // Current datetime as ISO string
 function nowISO() {
-  return new Date().toISOString().replace("T", " ").slice(0, 19);
+  // Indian Standard Time = UTC + 5:30
+  const now = new Date();
+  const ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+  return ist.toISOString().replace("T", " ").slice(0, 19);
 }
 
 function checkMark() {

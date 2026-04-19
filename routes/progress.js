@@ -1,4 +1,4 @@
-// routes/progress.js
+// routes/progress.js — MySQL 5.5 compatible (no updated_at column)
 const express = require("express");
 const pool    = require("../config/db");
 const { authRequired } = require("../middleware/auth");
@@ -6,7 +6,7 @@ const { authRequired } = require("../middleware/auth");
 const router = express.Router();
 router.use(authRequired);
 
-// GET /api/progress — load all progress + timestamps
+// GET /api/progress
 router.get("/", async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -21,11 +21,11 @@ router.get("/", async (req, res) => {
     return res.json({ progress, timestamps });
   } catch (err) {
     console.error("GET progress:", err.message);
-    return res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error: " + err.message });
   }
 });
 
-// POST /api/progress — batch upsert { updates: {key:bool}, timestamps: {key:datetime} }
+// POST /api/progress — batch save
 router.post("/", async (req, res) => {
   const updates    = req.body?.updates;
   const timestamps = req.body?.timestamps;
@@ -41,18 +41,18 @@ router.post("/", async (req, res) => {
       const ts = (value && timestamps && timestamps[key]) ? timestamps[key] : null;
       await pool.query(
         "INSERT INTO progress (user_id, pkey, value, completed_at) VALUES (?, ?, ?, ?) " +
-        "ON DUPLICATE KEY UPDATE value=VALUES(value), completed_at=VALUES(completed_at), updated_at=NOW()",
+        "ON DUPLICATE KEY UPDATE value = VALUES(value), completed_at = VALUES(completed_at)",
         [req.user.id, key, v, ts]
       );
     }
     return res.json({ saved: entries.length });
   } catch (err) {
     console.error("POST progress:", err.message);
-    return res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error: " + err.message });
   }
 });
 
-// PUT /api/progress/:key — toggle single item
+// PUT /api/progress/:key — toggle
 router.put("/:key", async (req, res) => {
   const key = req.params.key;
   if (!key || key.length > 220) return res.status(400).json({ error: "Invalid key" });
@@ -62,16 +62,20 @@ router.put("/:key", async (req, res) => {
       [req.user.id, key]
     );
     const newVal = rows.length ? (rows[0].value ? 0 : 1) : 1;
-    const ts     = newVal ? new Date().toISOString().replace("T", " ").slice(0, 19) : null;
+    // IST timestamp
+    const now = new Date();
+    const ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    const ts  = newVal ? ist.toISOString().replace("T", " ").slice(0, 19) : null;
+
     await pool.query(
       "INSERT INTO progress (user_id, pkey, value, completed_at) VALUES (?, ?, ?, ?) " +
-      "ON DUPLICATE KEY UPDATE value=VALUES(value), completed_at=VALUES(completed_at), updated_at=NOW()",
+      "ON DUPLICATE KEY UPDATE value = VALUES(value), completed_at = VALUES(completed_at)",
       [req.user.id, key, newVal, ts]
     );
     return res.json({ key, value: !!newVal, completed_at: ts });
   } catch (err) {
     console.error("PUT progress:", err.message);
-    return res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error: " + err.message });
   }
 });
 
@@ -92,12 +96,10 @@ router.get("/stats", async (req, res) => {
   try {
     const [[stats]] = await pool.query(
       "SELECT COUNT(*) AS total_done, " +
-      "SUM(pkey REGEXP '_d[0-9]+$') AS tasks_done, " +
-      "SUM(pkey LIKE 'taster_%') AS tasters_done, " +
-      "SUM(pkey LIKE 'combo_%') AS combos_done, " +
-      "SUM(pkey LIKE 'cl_%') AS checklist_done, " +
-      "MIN(completed_at) AS first_task, " +
-      "MAX(completed_at) AS last_task " +
+      "SUM(pkey LIKE '%\\_d%') AS tasks_done, " +
+      "SUM(pkey LIKE 'taster\\_%') AS tasters_done, " +
+      "SUM(pkey LIKE 'combo\\_%') AS combos_done, " +
+      "SUM(pkey LIKE 'cl\\_%') AS checklist_done " +
       "FROM progress WHERE user_id = ? AND value = 1",
       [req.user.id]
     );
