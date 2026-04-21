@@ -1,4 +1,4 @@
-# DE Tracker — AWS Data Engineer Progress Tracker-
+# DE Tracker — AWS Data Engineer Progress Tracker-----git 
 ### 🌐 Live at: [https://de-tracker-7fnr.onrender.com](https://de-tracker-7fnr.onrender.com)
 
 > **Built by Aditya Rawat** — Aspiring AWS Data Engineer | BCA Graduate | Delhi
@@ -222,3 +222,4 @@ Full 22-week curriculum available on Google Drive:
 ---
 
 *DE Tracker v2.0 · 2026 · Built for Aditya Rawat · MySQL · Node.js · JWT · Render*
+*--------------------------------------------------------------*
