@@ -222,4 +222,3 @@ Full 22-week curriculum available on Google Drive:
 ---
 
 *DE Tracker v2.0 · 2026 · Built for Aditya Rawat · MySQL · Node.js · JWT · Render*
-*--------------------------------------------------------------*
